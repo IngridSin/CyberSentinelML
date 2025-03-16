@@ -8,6 +8,8 @@ const (
 	DBName     = "test"
 	DBHost     = "127.0.0.1" // Inside SSH tunnel
 	DBPort     = "5432"
+	DBSchema   = "test_schema"
+	DBTable    = "test_network_flow"
 
 	// SSH Tunnel Config
 	SSHHost = "20.169.218.42"

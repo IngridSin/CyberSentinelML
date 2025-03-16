@@ -3,20 +3,25 @@ package models
 import (
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
+	"time"
 )
 
 type PacketFlow struct {
-	FlowID            string
-	SourceIP          string
-	SourcePort        uint16
-	DestinationIP     string
-	DestinationPort   uint16
-	Protocol          uint8
-	Timestamp         string
-	FlowDuration      int64
-	TotalFwdPackets   int
-	TotalBwdPackets   int
-	MinSegmentSizeFwd int
+	FlowID           string
+	SourceIP         string
+	SourcePort       uint16
+	DestinationIP    string
+	DestinationPort  uint16
+	Protocol         uint8
+	StartTime        time.Time
+	EndTime          time.Time
+	TotalFwdPackets  int
+	TotalBwdPackets  int
+	TotalFwdBytes    int
+	TotalBwdBytes    int
+	FwdPacketLengths []int
+	BwdPacketLengths []int
+	TCPFlags         map[string]int
 }
 
 type PacketLayers struct {
