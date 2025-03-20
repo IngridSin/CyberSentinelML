@@ -19,7 +19,7 @@ class DB:
         self.BATCH_INTERVAL = 10  # Process every 10 seconds
 
         self._connect_db()
-        # self._listen_for_notifications()
+        self._listen_for_notifications()
         # self._start_batch_processing_thread()
 
     def _open_ssh_tunnel(self):
@@ -70,7 +70,7 @@ class DB:
     def test_query(self):
         """Runs a test query to verify the database connection."""
         try:
-            self.cursor.execute("SELECT version();")  # Fetch PostgreSQL version
+            self.cursor.execute("SELECT version();")
             version = self.cursor.fetchone()
             print(f"Connected to PostgreSQL. Version: {version[0]}")
 
@@ -79,10 +79,13 @@ class DB:
 
 
     def _listen_for_notifications(self):
+
         """Start listening for PostgreSQL notifications."""
+
         try:
-            self.cursor.execute("LISTEN new_packet;")
-            print("Listening for new packets from PostgreSQL...")
+            self.cursor.execute("LISTEN NEW_PACKET;")
+
+            print("Listening for Notification NEW_PACKET from PostgreSQL...")
         except Exception as e:
             print(f"Error setting up LISTEN: {e}")
 
@@ -112,7 +115,6 @@ class DB:
             """, (batch_flow_ids,))
             packets = self.cursor.fetchall()
 
-            # Fake ML processing: Append "-processed" to flow_id
             # processed_results = {row[0]: f"{row[1]}-{row[2]}-{row[3]}-processed" for row in packets}
 
             # Bulk update results
@@ -133,19 +135,28 @@ class DB:
 
     def listen_for_new_packets(self):
         """Continuously listen for new packets from PostgreSQL."""
+
+
         while True:
+
+            print("Listening for new packets...")
+
             if select.select([self.conn], [], [], 5) == ([], [], []):
                 continue  # Timeout, loop again
 
             self.conn.poll()
             while self.conn.notifies:
                 notification = self.conn.notifies.pop(0)
-                flow_id = notification.payload
 
-                with self.queue_lock:
-                    self.flow_id_queue.add(flow_id) # Flow ID to be queried
+                print(f"Received new packet from PostgreSQL: {notification}")
 
-                print(f"Queued flow ID for batch processing: {flow_id}")
+
+                # flow_id = notification.payload
+                #
+                # with self.queue_lock:
+                #     self.flow_id_queue.add(flow_id) # Flow ID to be queried
+
+                # print(f"Queued flow ID for batch processing: {flow_id}")
 
 
     def close(self):

@@ -89,7 +89,7 @@ func insertBatch(packets []*models.PacketFlow) {
 		log.Printf("Failed to start transaction: %v", err)
 		return
 	}
-	defer tx.Rollback(ctx) // Ensure rollback on failure
+	defer tx.Rollback(ctx)
 
 	batch := &pgx.Batch{}
 
@@ -146,6 +146,7 @@ func InsertPacket(packet *models.PacketFlow) {
 		log.Println("Database connection is not initialized")
 		return
 	}
+	fmt.Println(packet)
 	packetChannel <- packet
 }
 
