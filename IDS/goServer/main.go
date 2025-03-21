@@ -26,7 +26,7 @@ func main() {
 	database.ConnectDB(tunnel.LocalPort)
 
 	// Start Packet Capture
-	interfaceName := config.NetworkInterface // Change based on your system
+	interfaceName := config.NetworkInterface
 	go capture.StartPacketCapture(interfaceName)
 
 	// Keep running

@@ -4,13 +4,25 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"sync"
+	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"goServer/config"
 	"goServer/models"
 )
 
-var dbPool *pgxpool.Pool
+const (
+	batchSize     = 50              // Number of packets per batch
+	flushInterval = 2 * time.Second // Max wait time before flushing batch
+)
+
+var (
+	dbPool        *pgxpool.Pool
+	packetChannel = make(chan *models.PacketFlow, 1000) // Buffered channel
+	wg            sync.WaitGroup
+)
 
 // ConnectDB initializes PostgreSQL connection
 func ConnectDB(localPort int) {
@@ -33,18 +45,54 @@ func ConnectDB(localPort int) {
 	}
 
 	fmt.Println("PostgreSQL Version:", version)
+
+	// Start the batch worker
+	wg.Add(1)
+	go batchInsertWorker()
 }
 
-// InsertPacket stores packet data into PostgreSQL
-func InsertPacket(packet *models.PacketFlow) {
-	if dbPool == nil {
-		log.Println("Database connection is not initialized")
+// batchInsertWorker: Collects packets and inserts them in bulk
+func batchInsertWorker() {
+	defer wg.Done()
+	ticker := time.NewTicker(flushInterval)
+	defer ticker.Stop()
+
+	var batch []*models.PacketFlow
+
+	for {
+		select {
+		case packet := <-packetChannel:
+			batch = append(batch, packet)
+			if len(batch) >= batchSize {
+				insertBatch(batch)
+				batch = nil // Reset batch after insert
+			}
+		case <-ticker.C:
+			// Flush remaining packets on interval timeout
+			if len(batch) > 0 {
+				insertBatch(batch)
+				batch = nil
+			}
+		}
+	}
+}
+
+// insertBatch: Inserts packets in bulk using pgx.Batch
+func insertBatch(packets []*models.PacketFlow) {
+	if len(packets) == 0 || dbPool == nil {
 		return
 	}
 
-	duration := packet.EndTime.Sub(packet.StartTime).Seconds()
+	ctx := context.Background()
+	tx, err := dbPool.Begin(ctx) // Start transaction
+	if err != nil {
+		log.Printf("Failed to start transaction: %v", err)
+		return
+	}
+	defer tx.Rollback(ctx)
 
-	// Construct full table reference with schema
+	batch := &pgx.Batch{}
+
 	fullTable := fmt.Sprintf("%s.%s", config.DBSchema, config.DBTable)
 
 	query := fmt.Sprintf(`
@@ -52,19 +100,60 @@ func InsertPacket(packet *models.PacketFlow) {
 			flow_id, source_ip, source_port, destination_ip, destination_port, protocol, timestamp,
 			flow_duration, total_fwd_packets, total_fwd_bytes, fin_flag_count, syn_flag_count, 
 			rst_flag_count, psh_flag_count, ack_flag_count, urg_flag_count
-		) VALUES ($1, $2, $3, $4, $5, $6, NOW(), $7, $8, $9, $10, $11, $12, $13, $14, $15)
-		ON CONFLICT (flow_id) DO UPDATE
-		SET flow_duration = $7, total_fwd_packets = $8, total_fwd_bytes = $9, 
-			fin_flag_count = $10, syn_flag_count = $11, rst_flag_count = $12, 
-			psh_flag_count = $13, ack_flag_count = $14, urg_flag_count = $15;
+		) VALUES (
+			$1, $2, $3, $4, $5, $6, NOW(), $7, $8, $9, $10, $11, $12, $13, $14, $15
+		)
+		ON CONFLICT (flow_id) DO UPDATE SET 
+			flow_duration = EXCLUDED.flow_duration, 
+			total_fwd_packets = EXCLUDED.total_fwd_packets, 
+			total_fwd_bytes = EXCLUDED.total_fwd_bytes, 
+			fin_flag_count = EXCLUDED.fin_flag_count, 
+			syn_flag_count = EXCLUDED.syn_flag_count, 
+			rst_flag_count = EXCLUDED.rst_flag_count, 
+			psh_flag_count = EXCLUDED.psh_flag_count, 
+			ack_flag_count = EXCLUDED.ack_flag_count, 
+			urg_flag_count = EXCLUDED.urg_flag_count;
 	`, fullTable)
 
-	_, err := dbPool.Exec(context.Background(), query, packet.FlowID, packet.SourceIP, packet.SourcePort,
-		packet.DestinationIP, packet.DestinationPort, packet.Protocol, duration,
-		packet.TotalFwdPackets, packet.TotalFwdBytes, packet.TCPFlags["FIN"], packet.TCPFlags["SYN"],
-		packet.TCPFlags["RST"], packet.TCPFlags["PSH"], packet.TCPFlags["ACK"], packet.TCPFlags["URG"])
-
-	if err != nil {
-		log.Printf("Failed to insert/update packet: %v", err)
+	// Add packets to batch
+	for _, packet := range packets {
+		duration := packet.EndTime.Sub(packet.StartTime).Seconds()
+		batch.Queue(query,
+			packet.FlowID, packet.SourceIP, packet.SourcePort,
+			packet.DestinationIP, packet.DestinationPort, packet.Protocol, duration,
+			packet.TotalFwdPackets, packet.TotalFwdBytes, packet.TCPFlags["FIN"],
+			packet.TCPFlags["SYN"], packet.TCPFlags["RST"], packet.TCPFlags["PSH"],
+			packet.TCPFlags["ACK"], packet.TCPFlags["URG"])
 	}
+
+	// Execute batch
+	br := tx.SendBatch(ctx, batch)
+	err = br.Close()
+	if err != nil {
+		log.Printf("Batch insert failed: %v", err)
+		return
+	}
+
+	err = tx.Commit(ctx) // Commit transaction
+	if err != nil {
+		log.Printf("Transaction commit failed: %v", err)
+	}
+}
+
+// InsertPacket InsertPacket: Sends packet to batch queue
+func InsertPacket(packet *models.PacketFlow) {
+	if dbPool == nil {
+		log.Println("Database connection is not initialized")
+		return
+	}
+	fmt.Println(packet)
+	packetChannel <- packet
+}
+
+// CloseDB: Gracefully shuts down database connection
+func CloseDB() {
+	close(packetChannel) // Close channel before waiting
+	wg.Wait()            // Wait for batch worker to finish
+	dbPool.Close()
+	fmt.Println("Database connection closed.")
 }
