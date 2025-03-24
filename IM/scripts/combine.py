@@ -13,8 +13,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # Load dataset
-df_1 = pd.read_csv("../Data/CEAS_08.csv")  # Update with the actual dataset path
-df_2 = pd.read_csv("../Data/data.csv")
+df_1 = pd.read_csv(r"C:\Users\may\Desktop\dataset\CEAS_08.csv")
+df_2 = pd.read_csv(r"C:\Users\may\Desktop\dataset/data.csv")
 
 # Extract relevant features and target
 df_1 = df_1[['sender', 'subject', 'body', 'label', 'urls']]
