@@ -815,3 +815,15 @@
   display: block;
   width: 100%;
 }
+.ct-series-a .ct-slice-pie {
+  fill: #dc3545; /* Dos */
+}
+.ct-series-b .ct-slice-pie {
+  fill: #17a2b8; /* SQL Injection */
+}
+.ct-series-c .ct-slice-pie {
+  fill: #ffc107; /* Ping */
+}
+.ct-series-d .ct-slice-pie {
+  fill: #28a745; /* XSS Attack */
+}

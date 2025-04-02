@@ -31,13 +31,13 @@ function Phishing() {
                 <Row>
                   <Col xs="3">
                     <div className="icon-big text-center icon-warning">
-                      <i className="nc-icon nc-chart text-warning"></i>
+                      <i className="nc-icon nc-email-83 text-warning"></i>
                     </div>
                   </Col>
                   <Col xs="8">
                     <div className="numbers">
                       <p className="card-category" style={{ fontSize: '20px', color: 'black'}}>Total number of email received </p>
-                      <Card.Title as="h4">15GB</Card.Title>
+                      <Card.Title as="h4">150GB</Card.Title>
                     </div>
                   </Col>
                 </Row>
@@ -60,7 +60,7 @@ function Phishing() {
                   <Col xs="10">
                     <div className="numbers">
                       <p className="card-category" style={{ fontSize: '20px', color: 'black'}}>Total number of suspected email received</p>
-                      <Card.Title as="h4">$ 1,345</Card.Title>
+                      <Card.Title as="h4">$ 1,355</Card.Title>
                     </div>
                   </Col>
                 </Row>
@@ -78,7 +78,7 @@ function Phishing() {
                 <Row>
                   <Col xs="2">
                     <div className="icon-big text-center icon-warning">
-                      <i className="nc-icon nc-vector text-danger"></i>
+                      <i className="nc-icon nc-watch-time text-danger"></i>
                     </div>
                   </Col>
                   <Col xs="10">
