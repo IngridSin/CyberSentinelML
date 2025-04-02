@@ -37,7 +37,7 @@ function Phishing() {
                   <Col xs="8">
                     <div className="numbers">
                       <p className="card-category" style={{ fontSize: '20px', color: 'black'}}>Total number of email received </p>
-                      <Card.Title as="h4">150GB</Card.Title>
+                      <Card.Title as="h4">15GB</Card.Title>
                     </div>
                   </Col>
                 </Row>
