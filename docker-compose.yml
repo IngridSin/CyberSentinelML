@@ -1,0 +1,51 @@
+version: '3.9'
+
+services:
+  go-server:
+    container_name: go-server
+    build:
+      context: ./GoServer
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+
+    restart: always
+#    environment:
+#      - DB_HOST=db
+#      - DB_USER=postgres
+#      - DB_PASSWORD=postgres
+#      - DB_NAME=emails
+
+  flask-server:
+    container_name: flask-server
+    build:
+      context: ./FlaskServer
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+
+    restart: always
+#    environment:
+#      - FLASK_ENV=development
+#      - DB_HOST=db
+#      - DB_USER=postgres
+#      - DB_PASSWORD=postgres
+#      - DB_NAME=emails
+
+  react-frontend:
+    container_name: react-frontend
+    build:
+      context: ./WebServer
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    stdin_open: true
+    tty: true
+#    environment:
+#      - CHOKIDAR_USEPOLLING=true
+    depends_on:
+      - go-server
+      - flask-server
+
+volumes:
+  pgdata:
