@@ -5,9 +5,7 @@ import (
 	"goServer/config"
 	"goServer/database"
 	"goServer/email"
-	"goServer/ssh"
 	"goServer/websocket"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -18,13 +16,13 @@ func main() {
 
 	go websocket.StartWebsocket()
 	// Start SSH Tunnel
-	tunnel, err := ssh.CreateSSHTunnel()
-	if err != nil {
-		log.Fatalf("Failed to create SSH tunnel: %v", err)
-	}
-	defer tunnel.Close()
-
-	fmt.Println("SSH Tunnel established on local port:", tunnel.LocalPort)
+	//tunnel, err := ssh.CreateSSHTunnel()
+	//if err != nil {
+	//	log.Fatalf("Failed to create SSH tunnel: %v", err)
+	//}
+	//defer tunnel.Close()
+	//
+	//fmt.Println("SSH Tunnel established on local port:", tunnel.LocalPort)
 
 	// Connect to Database via SSH Tunnel
 	//database.ConnectDB("packets", tunnel.LocalPort, config.DBName)
@@ -34,7 +32,7 @@ func main() {
 	//go capture.StartPacketCapture(interfaceName)
 	//
 
-	database.ConnectDB("emails", tunnel.LocalPort, config.IMDBName)
+	database.ConnectDB("emails", 0, config.IMDBName)
 
 	// Start Email Listener
 	go email.StartEmailListener()

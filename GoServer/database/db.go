@@ -34,9 +34,9 @@ func GetPool(jobName string) *pgxpool.Pool {
 }
 
 // ConnectDB initializes PostgreSQL connection
-func ConnectDB(jobName string, localPort int, dbName string) {
-	connString := fmt.Sprintf("postgres://%s:%s@localhost:%d/%s?sslmode=disable",
-		config.DBUser, config.DBPassword, localPort, dbName)
+func ConnectDB(jobName string, _ int, dbName string) { // remove 'localPort' usage
+	connString := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
+		config.DBUser, config.DBPassword, config.DBHost, config.DBPort, dbName) // now use config.DBHost + DBPort
 
 	pool, err := pgxpool.New(context.Background(), connString)
 	if err != nil {
@@ -54,7 +54,6 @@ func ConnectDB(jobName string, localPort int, dbName string) {
 
 	fmt.Printf("[%s] PostgreSQL Version: %s\n", jobName, version)
 
-	// If this job is for network capture, start the worker
 	if jobName == "packets" {
 		wg.Add(1)
 		for i := 0; i < runtime.NumCPU(); i++ {
