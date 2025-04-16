@@ -1,13 +1,13 @@
 import json
 
-from FlaskServer.Common.db import DB
+from Common.db import DB
 from dotenv import load_dotenv
 import os
 from typing import Dict, Any
 import atexit
 
-from FlaskServer.Emails.dkim import validate_email_headers
-from FlaskServer.Emails.ml import predict_phishing
+from Emails.dkim import validate_email_headers
+from Emails.ml import predict_phishing
 
 load_dotenv()
 

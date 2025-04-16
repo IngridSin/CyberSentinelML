@@ -19,7 +19,8 @@ def clean_text(text):
     return ' '.join(word for word in text.split() if word.lower() not in stop_words)
 
 # === Load Model Pipeline ===
-pipeline_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../IM/scripts/phishing_pipeline.joblib'))
+#pipeline_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../IM/scripts/phishing_pipeline.joblib'))
+pipeline_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'phishing_pipeline.joblib'))
 
 if not os.path.exists(pipeline_path):
     raise FileNotFoundError(f"Pipeline not found at {pipeline_path}")

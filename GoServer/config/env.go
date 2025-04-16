@@ -6,7 +6,7 @@ const (
 	DBUser     = "postgres"
 	DBPassword = "toor@1234567"
 	DBName     = "test"
-	DBHost     = "127.0.0.1" // Inside SSH tunnel
+	DBHost     = "192.168.0.5" // Inside SSH tunnel
 	DBPort     = "5432"
 	DBSchema   = "test_schema"
 	DBTable    = "test_network_flow"

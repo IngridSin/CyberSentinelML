@@ -1,9 +1,13 @@
 from flask import Flask, request, jsonify
-from FlaskServer.Common.db import DB
-from FlaskServer.Emails.dkim import validate_email_headers
-from FlaskServer.Emails.imUtils import get_email_by_message_id, run_ml_model, validate_headers, update_email_analysis
-from dotenv import load_dotenv
+import sys
 import os
+#sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from Common.db import DB
+from Emails.dkim import validate_email_headers
+from Emails.imUtils import get_email_by_message_id, run_ml_model, validate_headers, update_email_analysis
+from dotenv import load_dotenv
+
 import atexit
 
 load_dotenv()

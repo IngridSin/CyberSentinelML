@@ -12,23 +12,28 @@ import (
 )
 
 func StartEmailListener() {
+	go listenToMailbox("INBOX")
+	go listenToMailbox("[Gmail]/Spam") // Gmail spam folder label
+}
+
+func listenToMailbox(mailboxName string) {
 	// Connect to the server
 	c, err := client.DialTLS(config.IMAPServer, nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("[%s] IMAP connection failed: %v", mailboxName, err)
 	}
 	defer c.Logout()
 
 	// Login
 	if err := c.Login(config.IMUsername, config.IMPassword); err != nil {
-		log.Fatal(err)
+		log.Fatalf("[%s] Login failed: %v", mailboxName, err)
 	}
-	fmt.Println("Logged in")
+	log.Printf("[%s] Logged in\n", mailboxName)
 
-	// Select INBOX
-	_, err = c.Select("INBOX", false)
+	// Select mailbox
+	_, err = c.Select(mailboxName, false)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("[%s] Failed to select: %v", mailboxName, err)
 	}
 
 	idleClient := idle.NewClient(c)
@@ -40,10 +45,10 @@ func StartEmailListener() {
 	for {
 		mboxUpd, err := waitForMailboxUpdate(idleClient, updates)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("[%s] Error during idle: %v", mailboxName, err)
 		}
 		if meta, err := fetchParseEmail(c, mboxUpd.Mailbox); err == nil {
-			log.Println("Received new email:", meta.Subject)
+			log.Printf("[%s] Received new email: %s\n", mailboxName, meta.Subject)
 			err := database.InsertEmail(meta)
 			if err != nil {
 				log.Println("Failed to insert into DB:", err)
