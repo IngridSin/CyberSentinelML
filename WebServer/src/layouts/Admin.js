@@ -26,7 +26,7 @@ import FixedPlugin from "../components/FixedPlugin/FixedPlugin.js";
 import routes from "../routes.js";
 
 import sidebarImage from "../assets/img/sidebar-3.jpg";
-import useEmailStatsSocket from "../hooks/useEmailStatSocket";
+import useStatsSocket from "../hooks/useEmailStatSocket";
 
 function Admin() {
   const [image, setImage] = React.useState(sidebarImage);
@@ -50,7 +50,7 @@ function Admin() {
     });
   };
 
-  useEmailStatsSocket();
+  useStatsSocket();
 
   useEffect(() => {
     document.documentElement.scrollTop = 0;

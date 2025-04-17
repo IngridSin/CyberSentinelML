@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -31,8 +32,34 @@ func enableCORS(w http.ResponseWriter) {
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 }
 
+func StartNetworkStatsBroadcaster() {
+	go func() {
+		ticker := time.NewTicker(5 * time.Second)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ticker.C:
+				BroadcastNetworkStats()
+			}
+		}
+	}()
+}
+
 func StartWebsocket() {
 	http.HandleFunc("/ws", handleConnections)
+
+	http.HandleFunc("/api/network-stats", GetNetworkStatsHandler)
+
+	http.HandleFunc("/api/malicious-packets", GetMaliciousPacketsHandler)
+
+	http.HandleFunc("/api/network-packets", func(w http.ResponseWriter, r *http.Request) {
+		enableCORS(w)
+		if r.Method == http.MethodOptions {
+			return
+		}
+		GetPaginatedPacketsHandler(w, r)
+	})
 
 	http.HandleFunc("/api/email-stats", func(w http.ResponseWriter, r *http.Request) {
 		enableCORS(w)

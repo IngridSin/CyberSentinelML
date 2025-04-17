@@ -1,159 +1,132 @@
 import React from "react";
 import ChartistGraph from "react-chartist";
-// react-bootstrap components
 import {
-  Badge,
-  Button,
   Card,
-  Navbar,
-  Nav,
-  Table,
   Container,
   Row,
   Col,
-  Form,
-  OverlayTrigger,
-  Tooltip,
 } from "react-bootstrap";
 
+import useNetworkStore from "../store/networkStore";
+import useStatsSocket from "../hooks/useEmailStatSocket";
+
 function Network() {
+  useStatsSocket();
+
+  const {
+    totalFlows,
+    maliciousFlows,
+    lastMaliciousFlow,
+  } = useNetworkStore();
+
+  const safeTotal = totalFlows > 0 ? totalFlows : 1; // avoid divide-by-zero
+  const goodFlows = totalFlows - maliciousFlows;
+
   return (
-    <>
-      <Container fluid>
-        <Row>
+    <Container fluid>
+      <Row className="mb-4">
+        <Col lg="6" sm="6">
+          <Card className="card-stats">
+            <Card.Body>
+              <Row>
+                <Col xs="3">
+                  <div className="icon-big text-center icon-warning">
+                    <i className="nc-icon nc-chart text-primary" />
+                  </div>
+                </Col>
+                <Col xs="9">
+                  <div className="numbers">
+                    <p className="card-category" style={{ fontSize: '20px', color: 'black' }}>
+                      Total Flows Captured
+                    </p>
+                    <Card.Title as="h4">{totalFlows}</Card.Title>
+                  </div>
+                </Col>
+              </Row>
+            </Card.Body>
+          </Card>
+        </Col>
 
+        <Col lg="6" sm="6">
+          <Card className="card-stats">
+            <Card.Body>
+              <Row>
+                <Col xs="3">
+                  <div className="icon-big text-center icon-danger">
+                    <i className="nc-icon nc-lock-circle-open text-danger" />
+                  </div>
+                </Col>
+                <Col xs="9">
+                  <div className="numbers">
+                    <p className="card-category" style={{ fontSize: '20px', color: 'black' }}>
+                      Malicious Flows Detected
+                    </p>
+                    <Card.Title as="h4">{maliciousFlows}</Card.Title>
+                  </div>
+                </Col>
+              </Row>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
 
-          <Col lg="5.5" sm="6">
-            <Card className="card-stats">
-              <Card.Body>
-                <Row>
-                  <Col xs="3">
-                    <div className="icon-big text-center icon-warning">
-                      <i className="nc-icon nc-chart text-warning"></i>
-                    </div>
-                  </Col>
-                  <Col xs="8">
-                    <div className="numbers">
-                      <p className="card-category" style={{ fontSize: '20px', color: 'black'}}>Total number of packet received </p>
-                      <Card.Title as="h4">150GB</Card.Title>
-                    </div>
-                  </Col>
-                </Row>
-              </Card.Body>
-              <Card.Footer>
-              </Card.Footer>
-            </Card>
-          </Col>
+      <Row className="mb-4">
+        <Col lg="6" sm="6">
+          <Card className="card-stats">
+            <Card.Body>
+              <Row>
+                <Col xs="3">
+                  <div className="icon-big text-center icon-warning">
+                    <i className="nc-icon nc-vector text-warning" />
+                  </div>
+                </Col>
+                <Col xs="9">
+                  <div className="numbers">
+                    <p className="card-category" style={{ fontSize: '20px', color: 'black' }}>
+                      Last Malicious Flow Detected
+                    </p>
+                    <Card.Title as="h5">
+                      {lastMaliciousFlow?.flow_id || "N/A"}
+                    </Card.Title>
+                    <p style={{ fontSize: "14px" }}>
+                      Protocol: {lastMaliciousFlow?.protocol || "N/A"}<br />
+                      Risk Score: {lastMaliciousFlow?.risk_score?.toFixed(2) || "N/A"}
+                    </p>
+                  </div>
+                </Col>
+              </Row>
+            </Card.Body>
+          </Card>
+        </Col>
 
-
-          <Col lg="6.5" sm="6">
-            <Card className="card-stats">
-              <Card.Body>
-                <Row>
-                  <Col xs="2">
-                    <div className="icon-big text-center icon-warning">
-                      <i className="nc-icon nc-light-3 text-success"></i>
-                    </div>
-                  </Col>
-                  <Col xs="10">
-                    <div className="numbers">
-                      <p className="card-category" style={{ fontSize: '20px', color: 'black'}}>Total number of suspected packet received</p>
-                      <Card.Title as="h4">$ 1,345</Card.Title>
-                    </div>
-                  </Col>
-                </Row>
-              </Card.Body>
-              <Card.Footer>
-              </Card.Footer>
-            </Card>
-          </Col>
-
-          </Row>
-
-
-        <Row>
-
-          <Col lg="6" sm="5">
-            <Card className="card-stats">
-              <Card.Body>
-                <Row>
-                  <Col xs="3">
-                    <div className="icon-big text-center icon-warning">
-                      <i className="nc-icon nc-vector text-danger"></i>
-                    </div>
-                  </Col>
-                  <Col xs="8">
-                    <div className="numbers">
-                      <p className="card-category" style={{ fontSize: '20px', color: 'black'}}>Total number of packet received </p>
-                      <Card.Title as="h4">150GB</Card.Title>
-                    </div>
-                  </Col>
-                </Row>
-              </Card.Body>
-              <Card.Footer>
-              </Card.Footer>
-            </Card>
-          </Col>
-
-
-          <Col lg="6" sm="6">
-            <Card className="card-stats">
-              <Card.Body>
-                <Row>
-                  <Col xs="2">
-                    <div className="icon-big text-center icon-warning">
-                      <i className="nc-icon nc-light-3 text-success" style={{ fontSize: '45px' }}></i>
-                    </div>
-                  </Col>
-                  <Col xs="10">
-                    <div className="numbers">
-                      <p className="card-category" style={{ fontSize: '20px', color: 'black'}}>Attack type detected last time</p>
-                      <Card.Title as="h4">$ 1,345</Card.Title>
-                    </div>
-                  </Col>
-                </Row>
-              </Card.Body>
-              <Card.Footer>
-              </Card.Footer>
-            </Card>
-          </Col>
-
-          </Row>
-
-<Row>
-          <Col md="4">
-            <Card>
-              <Card.Header>
-                <Card.Title as="h4">Packet Statistics</Card.Title>
-               {/*  <p className="card-category">Last Campaign Performance</p> */}
-              </Card.Header>
-              <Card.Body>
-                <div
-                  className="ct-chart ct-perfect-fourth"
-                  id="chartPreferences"
-                >
-                  <ChartistGraph
-                    data={{
-                      labels: ["60%", "40%"],
-                      series: [60,40],
-                    }}
-                    type="Pie"
-                  />
-                </div>
-                <div className="legend">
-                  <i className="fas fa-circle text-info"  style={{ marginLeft: '20px' }}></i>
-                  Good Email
-                  <i className="fas fa-circle text-danger" style={{ marginLeft: '30px' }}></i>
-                  Suspected Email
-                </div>
-              </Card.Body>
-            </Card>
-          </Col>
-
-    </Row>
-
-      </Container>
-    </>
+        <Col md="6">
+          <Card>
+            <Card.Header>
+              <Card.Title as="h4">Packet Flow Pie Chart</Card.Title>
+            </Card.Header>
+            <Card.Body>
+              <div className="ct-chart ct-perfect-fourth">
+                <ChartistGraph
+                  data={{
+                    labels: [
+                      `${((goodFlows / safeTotal) * 100).toFixed(0)}%`,
+                      `${((maliciousFlows / safeTotal) * 100).toFixed(0)}%`,
+                    ],
+                    series: [goodFlows, maliciousFlows],
+                  }}
+                  type="Pie"
+                />
+              </div>
+              <div className="legend" style={{ paddingLeft: "20px" }}>
+                <i className="fas fa-circle text-info" /> Safe Packets
+                <span style={{ marginLeft: "20px" }} />
+                <i className="fas fa-circle text-danger" /> Malicious Packets
+              </div>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+    </Container>
   );
 }
 

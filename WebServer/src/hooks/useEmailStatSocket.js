@@ -1,15 +1,22 @@
 import { useEffect } from "react";
 import useEmailDashboardStore from "../store/emailDashboardStore";
+import useNetworkStore from "../store/networkStore";
 
-const useEmailStatsSocket = () => {
+const useStatsSocket = () => {
   useEffect(() => {
     const fetchInitialStats = async () => {
       try {
-        const res = await fetch("http://localhost:8080/api/email-stats");
-        const data = await res.json();
-        useEmailDashboardStore.getState().setDashboardStats(data);
+        const [emailRes, networkRes] = await Promise.all([
+          fetch("http://localhost:8080/api/email-stats"),
+          fetch("http://localhost:8080/api/network-stats"),
+        ]);
+        const emailData = await emailRes.json();
+        const networkData = await networkRes.json();
+
+        useEmailDashboardStore.getState().setDashboardStats(emailData);
+        useNetworkStore.getState().setNetworkStats(networkData);
       } catch (err) {
-        console.error("Failed to fetch initial email stats:", err);
+        console.error("Failed to fetch initial stats:", err);
       }
     };
 
@@ -21,14 +28,21 @@ const useEmailStatsSocket = () => {
     const connectWebSocket = () => {
       ws = new WebSocket("ws://localhost:8080/ws");
 
-      ws.onopen = () => console.log("WebSocket connected");
+      ws.onopen = () => console.log("🔗 Unified WebSocket connected");
 
       ws.onmessage = (event) => {
         const message = JSON.parse(event.data);
-        console.log("WS DATA:", message);
+        console.log("🛰️ WebSocket message:", message);
 
-        if (message.type === "EMAIL_DASHBOARD_STATS") {
-          useEmailDashboardStore.getState().setDashboardStats(message.payload); // Use .payload
+        switch (message.type) {
+          case "EMAIL_DASHBOARD_STATS":
+            useEmailDashboardStore.getState().setDashboardStats(message.payload);
+            break;
+          case "NETWORK_DASHBOARD_STATS":
+            useNetworkStore.getState().setNetworkStats(message.payload);
+            break;
+          default:
+            console.warn("Unknown WebSocket message type:", message.type);
         }
       };
 
@@ -52,4 +66,4 @@ const useEmailStatsSocket = () => {
   }, []);
 };
 
-export default useEmailStatsSocket;
+export default useStatsSocket;

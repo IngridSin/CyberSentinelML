@@ -6,14 +6,14 @@ import traceback
 
 
 import pandas as pd
-
+import os
 
 from Network.featureExtractor import extract_cic_features
 from Network.predictPackets import predict_packets
 
 
 BATCH_SIZE = 50
-r = redis.Redis(host='localhost', port=6379, db=0)
+r = redis.Redis(host=os.getenv("REDIS_ADDR"), port=6379, db=0)
 
 def parse_timestamps(ts):
     return [datetime.fromisoformat(t) if isinstance(t, str) else t for t in ts]
@@ -45,10 +45,10 @@ def run_flow_worker(db):
                     flows.append(pkt)
                     batch.append(pkt)
 
-                    print("\nRetrieved Packet:", data, "\n")
+                    # print("\nRetrieved Packet:", data, "\n")
 
                     if len(batch) >= BATCH_SIZE:
-                        print(f"Processing batch of {len(batch)} flows...")
+                        # print(f"Processing batch of {len(batch)} flows...")
                         packets_processing(db, batch, flows)
 
 

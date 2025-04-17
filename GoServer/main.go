@@ -6,6 +6,7 @@ import (
 	capture "goServer/capturePackets"
 	"goServer/config"
 	"goServer/database"
+	"goServer/email"
 	"goServer/ssh"
 	"goServer/websocket"
 	"log"
@@ -22,6 +23,8 @@ func main() {
 	buffer.InitRedis()
 
 	go websocket.StartWebsocket()
+	go websocket.StartNetworkStatsBroadcaster()
+
 	//Start SSH Tunnel
 	tunnel, err := ssh.CreateSSHTunnel()
 	if err != nil {
@@ -38,12 +41,11 @@ func main() {
 	interfaceName := config.NetworkInterface
 	go capture.StartPacketCapture(interfaceName)
 
-	//database.ConnectDB("emails", tunnel.LocalPort, config.IMDBName)
+	database.ConnectDB("emails", tunnel.LocalPort, config.IMDBName)
 
 	// Start Email Listener
-	//go email.StartEmailListener()
+	go email.StartEmailListener()
 
-	// Wait for interrupt signal (e.g., Ctrl+C)
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
