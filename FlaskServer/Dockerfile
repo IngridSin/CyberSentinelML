@@ -12,4 +12,4 @@ ENV PYTHONPATH=/app
 
 EXPOSE 5000
 
-CMD ["python", "Emails/imApp.py"]
+CMD ["python", "app.py"]

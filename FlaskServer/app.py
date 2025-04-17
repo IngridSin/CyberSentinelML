@@ -1,23 +1,25 @@
+import threading
+
 from flask import Flask, request, jsonify
 import sys
 import os
 #sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from Common.db import DB
+from Common.db import DB, ssh_tunnel
 from Emails.dkim import validate_email_headers
 from Emails.imUtils import get_email_by_message_id, run_ml_model, validate_headers, update_email_analysis
 from dotenv import load_dotenv
 
 import atexit
 
+from Redis.redisWorker import run_flow_worker
+
 load_dotenv()
 app = Flask(__name__)
 
-# Initialize DB
-db = DB(db_name=os.getenv("IM_DB_NAME"))
 
-# Register graceful shutdown
-atexit.register(db.close)
+atexit.register(lambda: ssh_tunnel and ssh_tunnel.stop())
+
 
 @app.before_request
 def log_request_info():
@@ -28,7 +30,6 @@ def log_request_info():
 
 @app.route("/predict", methods=["POST"])
 def predict():
-    print("PREDICTING:")
     data = request.get_json()
     message_id = data.get("message_id")
     print(data, message_id)
@@ -36,7 +37,7 @@ def predict():
         return jsonify({"error": "Missing message_id"}), 400
 
     #  Get email from DB
-    email = get_email_by_message_id(db, message_id)
+    email = get_email_by_message_id(db_im, message_id)
     print("message", email, message_id)
     if not email:
         return jsonify({"error": "Email not found"}), 404
@@ -55,7 +56,7 @@ def predict():
     }
 
     # Update database with everything
-    update_email_analysis(db, combined_result)
+    update_email_analysis(db_im, combined_result)
     print("=====RESULTS=====", "\n",combined_result)
 
 
@@ -76,9 +77,18 @@ def forbidden(e):
 
 
 if __name__ == "__main__":
+    db_pc = DB(os.getenv("DB_NAME"))
+    db_im = DB(db_name=os.getenv("IM_DB_NAME"))
+
     try:
         print("Starting Flask ML API server...")
-        app.run(debug=True, host="0.0.0.0", port=5000)
+        db_pc.test_query()
+
+        threading.Thread(target=run_flow_worker, args=(db_pc,), daemon=True).start()
+
+        app.run(debug=True, use_reloader=False, host="0.0.0.0", port=5050)
+
     except KeyboardInterrupt:
         print("Shutting down Flask server...")
-        db.close()
+        db_im.close()
+        db_pc.close()

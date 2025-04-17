@@ -2,10 +2,13 @@ package main
 
 import (
 	"fmt"
+	"goServer/buffer"
+	capture "goServer/capturePackets"
 	"goServer/config"
 	"goServer/database"
-	"goServer/email"
+	"goServer/ssh"
 	"goServer/websocket"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -14,28 +17,31 @@ import (
 func main() {
 	fmt.Println("Initializing CyberSentinel...")
 
+	fmt.Println("Initializing Redis...")
+
+	buffer.InitRedis()
+
 	go websocket.StartWebsocket()
-	// Start SSH Tunnel
-	//tunnel, err := ssh.CreateSSHTunnel()
-	//if err != nil {
-	//	log.Fatalf("Failed to create SSH tunnel: %v", err)
-	//}
-	//defer tunnel.Close()
-	//
-	//fmt.Println("SSH Tunnel established on local port:", tunnel.LocalPort)
+	//Start SSH Tunnel
+	tunnel, err := ssh.CreateSSHTunnel()
+	if err != nil {
+		log.Fatalf("Failed to create SSH tunnel: %v", err)
+	}
+	defer tunnel.Close()
+
+	fmt.Println("SSH Tunnel established on local port:", tunnel.LocalPort)
 
 	// Connect to Database via SSH Tunnel
-	//database.ConnectDB("packets", tunnel.LocalPort, config.DBName)
+	database.ConnectDB("packets", tunnel.LocalPort, config.DBName)
 
 	//// Start Packet Capture
-	//interfaceName := config.NetworkInterface
-	//go capture.StartPacketCapture(interfaceName)
-	//
+	interfaceName := config.NetworkInterface
+	go capture.StartPacketCapture(interfaceName)
 
-	database.ConnectDB("emails", 0, config.IMDBName)
+	//database.ConnectDB("emails", tunnel.LocalPort, config.IMDBName)
 
 	// Start Email Listener
-	go email.StartEmailListener()
+	//go email.StartEmailListener()
 
 	// Wait for interrupt signal (e.g., Ctrl+C)
 	sigs := make(chan os.Signal, 1)
